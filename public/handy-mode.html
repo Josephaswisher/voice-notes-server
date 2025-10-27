@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handy Mode - Real-Time Transcription</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .handy-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .handy-title {
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .handy-subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .record-button {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            margin: 0 auto 30px;
+        }
+
+        .record-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        }
+
+        .record-button.recording {
+            background: #ef4444;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .status-text {
+            font-size: 1.3em;
+            margin: 20px 0;
+            min-height: 60px;
+        }
+
+        .transcript-box {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            min-height: 200px;
+            font-size: 1.2em;
+            text-align: left;
+            line-height: 1.8;
+        }
+
+        .transcript-box:empty::before {
+            content: "Your transcription will appear here...";
+            opacity: 0.5;
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .control-btn {
+            padding: 12px 30px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            opacity: 0.9;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .vad-indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-left: 10px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="handy-container">
+        <h1 class="handy-title">🎙️ Handy Mode</h1>
+        <p class="handy-subtitle">Press and hold to speak • Release to transcribe</p>
+
+        <button class="record-button" id="recordBtn">
+            🎤
+        </button>
+
+        <div class="status-text" id="statusText">
+            Press and hold the microphone to start
+        </div>
+
+        <div class="transcript-box" id="transcript"></div>
+
+        <div class="controls">
+            <button class="control-btn" id="copyBtn">📋 Copy Text</button>
+            <button class="control-btn" id="clearBtn">🗑️ Clear</button>
+            <button class="control-btn" id="saveBtn">💾 Save to Notes</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="wordCount">0</div>
+                <div class="stat-label">Words</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="sessionCount">0</div>
+                <div class="stat-label">Sessions</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalTime">0s</div>
+                <div class="stat-label">Total Time</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { MicVAD } from "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js";
+
+        const API_BASE = window.location.origin;
+        const API_KEY = localStorage.getItem('apiKey') || '';
+
+        // State
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let sessionCount = 0;
+        let totalTime = 0;
+        let startTime = null;
+        let vad = null;
+
+        // Elements
+        const recordBtn = document.getElementById('recordBtn');
+        const statusText = document.getElementById('statusText');
+        const transcript = document.getElementById('transcript');
+        const wordCount = document.getElementById('wordCount');
+        const sessionCountEl = document.getElementById('sessionCount');
+        const totalTimeEl = document.getElementById('totalTime');
+
+        // Initialize VAD
+        async function initVAD() {
+            statusText.textContent = 'Initializing voice detection...';
+
+            vad = await MicVAD.new({
+                onSpeechStart: () => {
+                    if (!isRecording) return;
+                    statusText.innerHTML = 'Listening... <span class="vad-indicator"></span>';
+                },
+                onSpeechEnd: (audio) => {
+                    if (!isRecording) return;
+                    // Could send chunks in real-time here
+                },
+                onVADMisfire: () => {
+                    statusText.textContent = 'Listening (silence detected)';
+                },
+                positiveSpeechThreshold: 0.8,
+                minSpeechFrames: 5
+            });
+
+            statusText.textContent = 'Ready! Press and hold to speak';
+        }
+
+        // Start recording
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (e) => {
+                    audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = processRecording;
+
+                mediaRecorder.start();
+                vad?.start();
+                isRecording = true;
+                startTime = Date.now();
+
+                recordBtn.classList.add('recording');
+                recordBtn.textContent = '⏸️';
+                statusText.innerHTML = 'Recording... <span class="vad-indicator"></span>';
+            } catch (error) {
+                console.error('Microphone access error:', error);
+                statusText.textContent = 'Error: Could not access microphone';
+            }
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (!mediaRecorder || !isRecording) return;
+
+            mediaRecorder.stop();
+            vad?.pause();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            isRecording = false;
+
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            totalTime += duration;
+            totalTimeEl.textContent = `${totalTime}s`;
+
+            recordBtn.classList.remove('recording');
+            recordBtn.textContent = '🎤';
+            statusText.textContent = 'Processing transcription...';
+        }
+
+        // Process recording
+        async function processRecording() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+
+            // Send to server for transcription
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            try {
+                const response = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': API_KEY },
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Transcription failed');
+
+                const result = await response.json();
+
+                // Add to transcript
+                if (result.transcript) {
+                    const currentText = transcript.textContent;
+                    transcript.textContent = currentText +
+                        (currentText ? ' ' : '') +
+                        result.transcript;
+
+                    // Update stats
+                    sessionCount++;
+                    sessionCountEl.textContent = sessionCount;
+                    wordCount.textContent = transcript.textContent.split(/\s+/).filter(w => w).length;
+
+                    statusText.textContent = '✅ Transcribed! Press and hold for more';
+                } else {
+                    statusText.textContent = '⚠️ No speech detected. Try again.';
+                }
+            } catch (error) {
+                console.error('Transcription error:', error);
+                statusText.textContent = '❌ Transcription failed. Please try again.';
+            }
+        }
+
+        // Event listeners
+        recordBtn.addEventListener('mousedown', startRecording);
+        recordBtn.addEventListener('mouseup', stopRecording);
+        recordBtn.addEventListener('mouseleave', () => {
+            if (isRecording) stopRecording();
+        });
+
+        // Touch support for mobile
+        recordBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startRecording();
+        });
+        recordBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            stopRecording();
+        });
+
+        // Keyboard shortcut (Space bar)
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !isRecording && e.target === document.body) {
+                e.preventDefault();
+                startRecording();
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' && isRecording) {
+                e.preventDefault();
+                stopRecording();
+            }
+        });
+
+        // Control buttons
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(transcript.textContent);
+            statusText.textContent = '✅ Copied to clipboard!';
+            setTimeout(() => {
+                statusText.textContent = 'Ready! Press and hold to speak';
+            }, 2000);
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            transcript.textContent = '';
+            wordCount.textContent = '0';
+            statusText.textContent = 'Cleared! Ready for new session';
+        });
+
+        document.getElementById('saveBtn').addEventListener('click', async () => {
+            const text = transcript.textContent;
+            if (!text) return;
+
+            // Save as a text note to the server
+            const formData = new FormData();
+            const textBlob = new Blob([text], { type: 'text/plain' });
+            formData.append('audio', textBlob, 'handy-note.txt');
+
+            try {
+                await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': API_KEY },
+                    body: formData
+                });
+
+                statusText.textContent = '✅ Saved to voice notes!';
+                setTimeout(() => {
+                    statusText.textContent = 'Ready! Press and hold to speak';
+                }, 2000);
+            } catch (error) {
+                statusText.textContent = '❌ Save failed';
+            }
+        });
+
+        // Initialize
+        initVAD();
+    </script>
+</body>
+</html>
