@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Data directories
+data/
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# PM2
+.pm2/
+ecosystem.config.js
+
+# Audio files (optional - keep in repo for demo)
+# data/voice-notes/*.mp3
+# data/voice-notes/*.wav
+# data/voice-notes/*.ogg
+
+# Transcripts (generated)
+data/transcripts/*.json
+data/transcripts/*.txt
+
+# Test files
+test-*.mp3
+test-*.wav
+demo-*.mp3

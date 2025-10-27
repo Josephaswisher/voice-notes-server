@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Notes - AI-Powered Note Taking</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-microphone-alt"></i>
+                <h1>Voice Notes</h1>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-view="all">
+                    <i class="fas fa-inbox"></i>
+                    <span>All Notes</span>
+                    <span class="count" id="total-count">0</span>
+                </button>
+                <button class="nav-item" data-view="today">
+                    <i class="fas fa-calendar-day"></i>
+                    <span>Today</span>
+                    <span class="count" id="today-count">0</span>
+                </button>
+                <button class="nav-item" data-view="starred">
+                    <i class="fas fa-star"></i>
+                    <span>Starred</span>
+                    <span class="count" id="starred-count">0</span>
+                </button>
+            </nav>
+
+            <div class="categories">
+                <h3>Categories</h3>
+                <div id="category-list">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <div class="priority-filters">
+                <h3>Priority</h3>
+                <button class="priority-filter" data-priority="high">
+                    <i class="fas fa-circle" style="color: #ef4444;"></i>
+                    High
+                </button>
+                <button class="priority-filter" data-priority="medium">
+                    <i class="fas fa-circle" style="color: #f59e0b;"></i>
+                    Medium
+                </button>
+                <button class="priority-filter" data-priority="low">
+                    <i class="fas fa-circle" style="color: #10b981;"></i>
+                    Low
+                </button>
+            </div>
+
+            <button class="new-note-btn" id="upload-btn">
+                <i class="fas fa-plus"></i>
+                Upload Voice Note
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Search your notes...">
+                    <button class="semantic-search-btn" id="semantic-search-btn" title="Semantic Search">
+                        <i class="fas fa-brain"></i>
+                    </button>
+                </div>
+
+                <div class="header-actions">
+                    <button class="icon-btn" id="summary-btn" title="Generate Summary">
+                        <i class="fas fa-file-alt"></i>
+                    </button>
+                    <button class="icon-btn" id="settings-btn" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Notes Grid -->
+            <div class="notes-container">
+                <div class="notes-header">
+                    <h2 id="view-title">All Notes</h2>
+                    <div class="sort-controls">
+                        <select id="sort-select">
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                            <option value="priority">By Priority</option>
+                            <option value="duration">By Duration</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="notes-grid" class="notes-grid">
+                    <!-- Loading state -->
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading your notes...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Note Detail Panel -->
+        <aside class="detail-panel" id="detail-panel">
+            <div class="detail-header">
+                <button class="close-btn" id="close-detail">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="detail-content" id="detail-content">
+                <!-- Dynamically populated -->
+            </div>
+        </aside>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal" id="upload-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload Voice Note</h2>
+                <button class="close-btn" id="close-upload">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Drop audio file here</h3>
+                    <p>or click to browse</p>
+                    <input type="file" id="file-input" accept="audio/*" hidden>
+                </div>
+                <div class="upload-progress" id="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p id="upload-status">Uploading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Modal -->
+    <div class="modal" id="summary-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Generate Summary</h2>
+                <button class="close-btn" id="close-summary">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="summary-options">
+                    <button class="summary-option" data-period="daily">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>Daily Summary</span>
+                    </button>
+                    <button class="summary-option" data-period="weekly">
+                        <i class="fas fa-calendar-week"></i>
+                        <span>Weekly Summary</span>
+                    </button>
+                </div>
+                <div class="summary-result" id="summary-result" style="display: none;">
+                    <!-- Generated summary -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

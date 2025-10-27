@@ -1,0 +1,139 @@
+{
+  "name": "Voice Notes Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "voice-notes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "voice-notes-webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"success\": true, \"received\": $json.id} }}"
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.transcription.text}}",
+              "operation": "contains",
+              "value2": "urgent"
+            }
+          ]
+        }
+      },
+      "name": "Check if Urgent",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "send",
+        "chatId": "your-chat-id",
+        "text": "=🚨 URGENT Voice Note:\n\n{{$json.transcription.text}}\n\n⏱️ {{$json.duration}}s\n📅 {{$json.timestamp}}"
+      },
+      "name": "Send Urgent Notification",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "database",
+        "databaseId": "your-notion-database-id",
+        "title": "={{$json.transcription.text.substring(0, 50)}}...",
+        "properties": {
+          "property": [
+            {
+              "key": "Transcript",
+              "textContent": "={{$json.transcription.text}}"
+            },
+            {
+              "key": "Duration",
+              "numberValue": "={{$json.duration}}"
+            },
+            {
+              "key": "Source",
+              "selectValue": "={{$json.source}}"
+            },
+            {
+              "key": "Created",
+              "dateValue": "={{$json.timestamp}}"
+            }
+          ]
+        }
+      },
+      "name": "Save to Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "operation": "sendEmail",
+        "fromEmail": "voice-notes@yourdomain.com",
+        "toEmail": "you@example.com",
+        "subject": "=Voice Note: {{$json.transcription.text.substring(0, 30)}}...",
+        "text": "=Transcript:\n{{$json.transcription.text}}\n\nDuration: {{$json.duration}}s\nSource: {{$json.source}}\nTimestamp: {{$json.timestamp}}"
+      },
+      "name": "Email Summary",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4-turbo-preview",
+        "prompt": "=Categorize this voice note and extract key information:\n\n{{$json.transcription.text}}\n\nProvide: category, key points, action items, sentiment"
+      },
+      "name": "AI Analysis (Optional)",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Respond to Webhook","type": "main","index": 0}]]
+    },
+    "Respond to Webhook": {
+      "main": [[{"node": "Check if Urgent","type": "main","index": 0}]]
+    },
+    "Check if Urgent": {
+      "main": [
+        [{"node": "Send Urgent Notification","type": "main","index": 0}],
+        [{"node": "Save to Notion","type": "main","index": 0}]
+      ]
+    },
+    "Save to Notion": {
+      "main": [[{"node": "Email Summary","type": "main","index": 0}]]
+    },
+    "Email Summary": {
+      "main": [[{"node": "AI Analysis (Optional)","type": "main","index": 0}]]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-27T00:00:00.000Z",
+  "versionId": "1"
+}
