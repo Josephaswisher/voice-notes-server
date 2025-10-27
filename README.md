@@ -1,12 +1,26 @@
 # 🎙️ Voice Notes Server
 
-**Self-hosted VoiceNotes.com-style voice notes system with FREE local AI transcription!**
+**FREE, privacy-first voice transcription. Like VoiceNotes.com, but you own everything.**
 
-Capture voice notes from anywhere, get instant transcriptions, and let AI organize everything for you.
+Press and hold → Speak → Instant transcription. Unlimited. Forever. $0/month.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
+[![PWA](https://img.shields.io/badge/PWA-installable-purple.svg)](PWA_GUIDE.md)
+
+## 🚀 Deploy in 60 Seconds
+
+```bash
+# One command to get started
+git clone https://github.com/Josephaswisher/voice-notes-server.git
+cd voice-notes-server && cp .env.example .env && docker-compose up -d
+```
+
+**Or use 1-click deploy**: [See all deployment options →](EASY_DEPLOY.md)
+
+> **New?** Try the [live demo](http://localhost:4000) first → Install later
 
 ## ✨ Features
 

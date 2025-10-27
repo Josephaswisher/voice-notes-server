@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  voice-notes:
+    build: .
+    container_name: voice-notes-server
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      # Server
+      - PORT=4000
+      - NODE_ENV=production
+      - API_SECRET_KEY=${API_SECRET_KEY:-your-secret-key-change-me}
+
+      # Transcription (FREE Local Whisper)
+      - USE_LOCAL_WHISPER=true
+      - WHISPER_MODEL=${WHISPER_MODEL:-base}
+
+      # OpenAI (Optional - for AI features)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ENABLE_AI_PROCESSING=${ENABLE_AI_PROCESSING:-false}
+
+      # Telegram Bot (Optional)
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_ALLOWED_USERS=${TELEGRAM_ALLOWED_USERS:-}
+
+      # Storage
+      - VOICE_NOTES_DIR=/app/data/voice-notes
+      - TRANSCRIPTS_DIR=/app/data/transcripts
+
+    volumes:
+      # Persist voice notes and transcripts
+      - voice-notes-data:/app/data
+      # Optional: Custom .env file
+      # - ./.env:/app/.env
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+    labels:
+      - "com.voice-notes.description=Privacy-first voice transcription with FREE local AI"
+      - "com.voice-notes.version=1.0.0"
+
+volumes:
+  voice-notes-data:
+    driver: local
+
+# Optional: Add reverse proxy for HTTPS
+# Uncomment below to add Nginx reverse proxy with Let's Encrypt
+
+# nginx-proxy:
+#   image: nginxproxy/nginx-proxy
+#   ports:
+#     - "80:80"
+#     - "443:443"
+#   volumes:
+#     - /var/run/docker.sock:/tmp/docker.sock:ro
+#     - certs:/etc/nginx/certs
+#     - vhost:/etc/nginx/vhost.d
+#     - html:/usr/share/nginx/html
+#   restart: unless-stopped
+#
+# letsencrypt:
+#   image: nginxproxy/acme-companion
+#   volumes:
+#     - /var/run/docker.sock:/var/run/docker.sock:ro
+#     - certs:/etc/nginx/certs
+#     - vhost:/etc/nginx/vhost.d
+#     - html:/usr/share/nginx/html
+#     - acme:/etc/acme.sh
+#   environment:
+#     - DEFAULT_EMAIL=your-email@example.com
+#   restart: unless-stopped
+#
+# volumes:
+#   certs:
+#   vhost:
+#   html:
+#   acme:
