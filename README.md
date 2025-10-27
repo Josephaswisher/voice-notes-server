@@ -13,6 +13,7 @@ Capture voice notes from anywhere, get instant transcriptions, and let AI organi
 ### 🎯 Core Features
 - 🎙️ **Voice Note Capture** - Upload via web, API, or Telegram bot
 - ⚡ **[Handy Mode](HANDY_MODE.md)** - Press-and-hold real-time transcription (inspired by [Handy](https://github.com/cjpais/Handy))
+- 📱 **[Progressive Web App](PWA_GUIDE.md)** - Install on phone/tablet/desktop like a native app
 - 🆓 **FREE Local Transcription** - OpenAI Whisper (no API costs!)
 - 🧠 **Voice Activity Detection** - Silero VAD filters silence automatically
 - 🌐 **Beautiful Web UI** - VoiceNotes.com-inspired dashboard
@@ -20,6 +21,7 @@ Capture voice notes from anywhere, get instant transcriptions, and let AI organi
 - 📱 **Mobile Access** - Telegram bot integration
 - 🎵 **Audio Playback** - Built-in audio player
 - 📊 **Real-time Updates** - Instant sync across devices
+- ⚡ **Offline Caching** - Works offline with service workers
 
 ### 🧠 AI Features (Optional)
 - ✨ **Smart Titles** - Auto-generated descriptive titles
@@ -80,6 +82,7 @@ pm2 save
 
 - [🚀 Quick Start Guide](🚀-START-HERE.md)
 - [⚡ Handy Mode - Real-Time Transcription](HANDY_MODE.md) ⭐ NEW!
+- [📱 Progressive Web App (PWA) Guide](PWA_GUIDE.md) ⭐ NEW!
 - [📱 Telegram Bot Setup](TELEGRAM_SETUP.md)
 - [🎨 Web UI Guide](WEB_UI_COMPLETE.md)
 - [🆓 Local Whisper Setup](LOCAL_WHISPER_SETUP.md)

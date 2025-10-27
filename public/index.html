@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Notes - AI-Powered Note Taking</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Privacy-first voice transcription with FREE local AI. Press and hold to speak, instant transcription.">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VoiceNotes">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png">
+
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -177,5 +193,82 @@
     </div>
 
     <script src="/app.js"></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registered:', registration.scope);
+
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available
+                                    if (confirm('New version available! Reload to update?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker registration failed:', error);
+                    });
+            });
+
+            // Install prompt
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+
+                // Show install button/banner
+                const installBanner = document.createElement('div');
+                installBanner.id = 'install-banner';
+                installBanner.innerHTML = `
+                    <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white; padding: 15px 30px; border-radius: 50px;
+                                box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 10000;
+                                display: flex; align-items: center; gap: 15px;">
+                        <span>📱 Install Voice Notes as an app</span>
+                        <button id="install-btn" style="background: white; color: #667eea;
+                                                        border: none; padding: 8px 20px;
+                                                        border-radius: 20px; cursor: pointer;
+                                                        font-weight: 600;">
+                            Install
+                        </button>
+                        <button id="dismiss-btn" style="background: transparent; color: white;
+                                                        border: 1px solid white; padding: 8px 20px;
+                                                        border-radius: 20px; cursor: pointer;">
+                            Not Now
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(installBanner);
+
+                document.getElementById('install-btn').addEventListener('click', async () => {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('Install prompt outcome:', outcome);
+                    installBanner.remove();
+                    deferredPrompt = null;
+                });
+
+                document.getElementById('dismiss-btn').addEventListener('click', () => {
+                    installBanner.remove();
+                });
+            });
+
+            window.addEventListener('appinstalled', () => {
+                console.log('✅ PWA installed successfully!');
+                deferredPrompt = null;
+            });
+        }
+    </script>
 </body>
 </html>
